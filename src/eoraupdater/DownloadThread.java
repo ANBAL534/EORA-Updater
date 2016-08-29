@@ -5,7 +5,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -20,6 +19,31 @@ import org.apache.commons.io.FileUtils;
  */
 public class DownloadThread extends Thread{
     
+    /*
+    It looks for current.ver file at server, inside it needs to be:
+    
+    014 //New version number
+    7   //Number of files inside the zip
+    
+    Depending on the host O.S it will create the filename expected:
+    
+    Ratting_Advisor_X-X-X.zip           //For Windows
+    Ratting_Advisor_Linux_Mac_X-X-X.zip //For Linux/Mac
+    
+    The X needs to be substitued with the current.ver first line digits in order.
+    
+    Then it looks for megaRoutes.pth file at the server, inside has 2 Mega.nz links
+    One for the windows zip version, and another for Linux/Mac zip version
+    
+    https://mega.nz/#!itp2iCIZ!HiMtYsWeILHaWau96c8Ms_PReXlZxtz5dvxv71pSahE //They are the same link, just for example
+    https://mega.nz/#!itp2iCIZ!HiMtYsWeILHaWau96c8Ms_PReXlZxtz5dvxv71pSahE
+    
+    Then, the updater download te zip into UpdateCache folder and decompress it.
+    Deletes the zip that are no longer necessary and proceeds to copy the decompressed
+    content to the original folder, except the settings.cfg file.
+    */
+    
+    //Variables
     private JProgressBar progressBar;
     private JLabel state;
     
@@ -83,18 +107,20 @@ public class DownloadThread extends Thread{
             increaseConstant = 100/totalFinalFileNumber;
             
         } catch (Exception e) {
-            int result = JOptionPane.showInternalConfirmDialog(progressBar, "The found a problem while getting the version information and can't continue.\nAt this stage of the update, your Ratting Advisor hasn't be modified, it's safe to use.\nDo you want to see error output to send it to the developer and blame him for his errors?\n\nPress NO to launch the old version of Ratting Advisor.\n", "Something went wrong", JOptionPane.YES_NO_OPTION);
+            int result = JOptionPane.showConfirmDialog(null, "The found a problem while getting the version information and can't continue.\nAt this stage of the update, your Ratting Advisor hasn't be modified, it's safe to use.\nDo you want to see error output to send it to the developer and blame him for his errors?\n\nPress NO to launch the old version of Ratting Advisor.\n", "Something went wrong", JOptionPane.YES_NO_OPTION);
             if(result == 0){
                 
-                JOptionPane.showMessageDialog(progressBar, "Error Output:\n\n" + e.getMessage() + "\n**************\n" + e.getStackTrace() + "\n\nPress OK to launch the old version of Ratting Advisor.\n", "Error Output", JOptionPane.OK_OPTION);
+                JOptionPane.showMessageDialog(null, "Error Output:\n\n" + e.getMessage() + "\n**************\n" + e.getStackTrace() + "\n\nPress OK to launch the old version of Ratting Advisor.\n", "Error Output", JOptionPane.OK_OPTION);
                 
             }
             
             try {
-                    Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
+                Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
             }
+            
+            System.exit(-1);
             
         }
         
@@ -111,26 +137,34 @@ public class DownloadThread extends Thread{
             FileUtils.copyURLToFile(megaRoutes, megaRoutesDest);
             
             //Get the mega link from file
-            BufferedReader br = new BufferedReader(new FileReader(megaRoutesDest));
-            megaLink = br.readLine();
+            BufferedReader br = new BufferedReader(new FileReader(megaRoutesDest));            
+            if(System.getProperty("os.name").toLowerCase().contains("win")){
+                megaLink = br.readLine();
+            }else{
+                br.readLine();//As the second link is the Linux/Mac one and the first the Windows one
+                megaLink = br.readLine();
+            }
+            
             br.close();
             
             //Delete mega links file
             megaRoutesDest.delete();
             
         } catch (Exception e) {
-            int result = JOptionPane.showInternalConfirmDialog(progressBar, "The found a problem while getting the update download link and can't continue.\nAt this stage of the update, your Ratting Advisor hasn't be modified, it's safe to use.\nDo you want to see error output to send it to the developer and blame him for his errors?\n\nPress NO to launch the old version of Ratting Advisor.\n", "Something went wrong", JOptionPane.YES_NO_OPTION);
+            int result = JOptionPane.showConfirmDialog(null, "The found a problem while getting the update download link and can't continue.\nAt this stage of the update, your Ratting Advisor hasn't be modified, it's safe to use.\nDo you want to see error output to send it to the developer and blame him for his errors?\n\nPress NO to launch the old version of Ratting Advisor.\n", "Something went wrong", JOptionPane.YES_NO_OPTION);
             if(result == 0){
                 
-                JOptionPane.showMessageDialog(progressBar, "Error Output:\n\n" + e.getMessage() + "\n**************\n" + e.getStackTrace() + "\n\nPress OK to launch the old version of Ratting Advisor.\n", "Error Output", JOptionPane.OK_OPTION);
+                JOptionPane.showMessageDialog(null, "Error Output:\n\n" + e.getMessage() + "\n**************\n" + e.getStackTrace() + "\n\nPress OK to launch the old version of Ratting Advisor.\n", "Error Output", JOptionPane.OK_OPTION);
                 
             }
             
             try {
-                    Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
+                Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
             }
+            
+            System.exit(-1);
             
         }
         
@@ -157,18 +191,20 @@ public class DownloadThread extends Thread{
             new File("UpdateCache/" + endFileName).delete();
             
         } catch (Exception e) {
-            int result = JOptionPane.showInternalConfirmDialog(progressBar, "The found a problem while downloading and uncompressing files and can't continue.\nAt this stage of the update, your Ratting Advisor hasn't be modified, it's safe to use.\nDo you want to see error output to send it to the developer and blame him for his errors?\n\nPress NO to launch the old version of Ratting Advisor.\n", "Something went wrong", JOptionPane.YES_NO_OPTION);
+            int result = JOptionPane.showConfirmDialog(null, "The found a problem while downloading and uncompressing files and can't continue.\nAt this stage of the update, your Ratting Advisor hasn't be modified, it's safe to use.\nDo you want to see error output to send it to the developer and blame him for his errors?\n\nPress NO to launch the old version of Ratting Advisor.\n", "Something went wrong", JOptionPane.YES_NO_OPTION);
             if(result == 0){
                 
-                JOptionPane.showMessageDialog(progressBar, "Error Output:\n\n" + e.getMessage() + "\n**************\n" + e.getStackTrace() + "\n\nPress OK to launch the old version of Ratting Advisor.\n", "Error Output", JOptionPane.OK_OPTION);
+                JOptionPane.showMessageDialog(null, "Error Output:\n\n" + e.getMessage() + "\n**************\n" + e.getStackTrace() + "\n\nPress OK to launch the old version of Ratting Advisor.\n", "Error Output", JOptionPane.OK_OPTION);
                 
             }
             
             try {
-                    Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
+                Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
             }
+            
+            System.exit(-1);
             
         }
         
@@ -213,18 +249,20 @@ public class DownloadThread extends Thread{
             }
             
         } catch (Exception e) {
-            int result = JOptionPane.showInternalConfirmDialog(progressBar, "The found a problem while updating files and can't continue.\nAt this stage of the update, your Ratting Advisor may be corrupt, redownload it completely.\nDo you want to see error output to send it to the developer and blame him for his errors?\n\nPress NO to launch the old version of Ratting Advisor.\n", "Something went wrong", JOptionPane.YES_NO_OPTION);
+            int result = JOptionPane.showConfirmDialog(null, "The found a problem while updating files and can't continue.\nAt this stage of the update, your Ratting Advisor may be corrupt, redownload it completely.\nDo you want to see error output to send it to the developer and blame him for his errors?\n\nPress NO to launch the old version of Ratting Advisor.\n", "Something went wrong", JOptionPane.YES_NO_OPTION);
             if(result == 0){
                 
-                JOptionPane.showMessageDialog(progressBar, "Error Output:\n\n" + e.getMessage() + "\n**************\n" + e.getStackTrace() + "\n\nPress OK to launch the old version of Ratting Advisor.\n", "Error Output", JOptionPane.OK_OPTION);
+                JOptionPane.showMessageDialog(null, "Error Output:\n\n" + e.getMessage() + "\n**************\n" + e.getStackTrace() + "\n\nPress OK to launch the old version of Ratting Advisor.\n", "Error Output", JOptionPane.OK_OPTION);
                 
             }
             
             try {
-                    Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
+                Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
             } catch (IOException ex) {
                 Logger.getLogger(DownloadThread.class.getName()).log(Level.SEVERE, null, ex);
             }
+            
+            System.exit(-1);
             
         }
         
@@ -237,7 +275,7 @@ public class DownloadThread extends Thread{
         getMegaLink();
         downloadAndUnzip();
         copyNewFiles();
-        JOptionPane.showMessageDialog(progressBar, "The program updated correctly.\nPress OK to launch the Ratting Advisor", "Update Finished", JOptionPane.OK_OPTION);
+        JOptionPane.showMessageDialog(null, "The program updated correctly.\nPress OK to launch the Ratting Advisor", "Update Finished", JOptionPane.INFORMATION_MESSAGE);
 
         try {
             Runtime.getRuntime().exec("java -jar \"Ratting Advisor.jar\"");
