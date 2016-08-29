@@ -228,7 +228,7 @@ public class DownloadThread extends Thread{
             folderFiles = cacheBaseFolder.listFiles();
             for (int i = 0; i < folderFiles.length; i++) {
 
-                if(!folderFiles[i].isDirectory() && !folderFiles[i].getName().endsWith("cfg"))
+                if(!folderFiles[i].isDirectory() && !folderFiles[i].getName().endsWith("cfg") && !folderFiles[i].getName().contains("EORA"))
                     FileUtils.copyFileToDirectory(folderFiles[i], currentBaseFolder);
                 
                 increaseProgress();
@@ -240,7 +240,7 @@ public class DownloadThread extends Thread{
             folderFiles = cacheLibFolder.listFiles();
             for (int i = 0; i < folderFiles.length; i++) {
 
-                if(!folderFiles[i].isDirectory())
+                if(!folderFiles[i].isDirectory() && !folderFiles[i].getName().contains("appframework") && !folderFiles[i].getName().contains("swing-worker") && !folderFiles[i].getName().contains("commons-io"))
                     FileUtils.copyFileToDirectory(folderFiles[i], currentLibFolder);
                 
                 increaseProgress();
